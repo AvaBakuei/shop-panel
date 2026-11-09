@@ -6,3 +6,8 @@ export interface User {
   lastName: string
   image: string
 }
+
+export interface LoginResponse extends User {
+  accessToken: string
+  refreshToken: string
+}
