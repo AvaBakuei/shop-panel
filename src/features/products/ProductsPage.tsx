@@ -1,12 +1,24 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { getProducts } from './productsApi'
+import type { ProductsQuery, SortField, SortOrder } from './types'
+import { useSearchParams } from 'react-router'
 
 const priceFormatter = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
 
 export default function ProductsPage() {
-  const { data, isPending, isError } = useQuery({
-    queryKey: ['products'],
-    queryFn: getProducts,
+  const [searchParams] = useSearchParams()
+
+  const query: ProductsQuery = {
+    page: Number(searchParams.get('page') ?? '1'),
+    search: searchParams.get('q') ?? '',
+    category: searchParams.get('category') ?? '',
+    sortBy: (searchParams.get('sortBy') ?? 'title') as SortField,
+    order: (searchParams.get('order') ?? 'asc') as SortOrder,
+  }
+  const { data, isPending, isError, isPlaceholderData } = useQuery({
+    queryKey: ['products', query],
+    queryFn: () => getProducts(query),
+    placeholderData: keepPreviousData,
   })
   if (isPending) {
     return <p>Loading products...</p>
@@ -24,7 +36,9 @@ export default function ProductsPage() {
     <div>
       <h1 className="mb-4 text-2xl font-semibold">Products</h1>
 
-      <table className="w-full border-collapse bg-white text-left text-sm">
+      <table
+        className={`w-full border-collapse bg-white text-left text-sm ${isPlaceholderData ? 'opacity-50' : ''}`}
+      >
         <thead className="border-b bg-slate-100">
           <tr>
             <th className="px-4 py-2">Image</th>
