@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuthStore } from './authStore'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate, Navigate } from 'react-router'
 import { loginRequest } from './authApi'
 
 export default function LoginPage() {
@@ -10,6 +10,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
+  const location = useLocation()
+  const token = useAuthStore((s) => s.token)
+
+  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
+
+  if (token) {
+    return <Navigate to={from} replace />
+  }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -19,7 +27,7 @@ export default function LoginPage() {
       const response = await loginRequest(username, password)
       const { accessToken, refreshToken, ...user } = response
       login(user, accessToken)
-      navigate('/dashboard')
+      navigate(from, { replace: true })
     } catch {
       setError('Something went wrong!')
     } finally {
