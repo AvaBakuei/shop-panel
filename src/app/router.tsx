@@ -5,6 +5,7 @@ import AppLayout from '../components/layout/AppLayout'
 import DashboardPage from '../features/dashboard/DashboardPage'
 import ProductsPage from '../features/products/ProductsPage'
 import UsersPage from '../features/users/UsersPage'
+import ProtectedRoute from '../features/auth/ProtectedRoute'
 
 export const router = createBrowserRouter([
   {
@@ -12,24 +13,29 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    path: '/',
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'dashboard',
-        element: <DashboardPage />,
-      },
-      {
-        path: 'products',
-        element: <ProductsPage />,
-      },
-      {
-        path: 'users',
-        element: <UsersPage />,
+        path: '/',
+        element: <AppLayout />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/dashboard" replace />,
+          },
+          {
+            path: 'dashboard',
+            element: <DashboardPage />,
+          },
+          {
+            path: 'products',
+            element: <ProductsPage />,
+          },
+          {
+            path: 'users',
+            element: <UsersPage />,
+          },
+        ],
       },
     ],
   },
