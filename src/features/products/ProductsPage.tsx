@@ -3,8 +3,16 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router'
 import { getCategories, getProducts, PAGE_SIZE } from './productsApi'
 import type { ProductsQuery, SortField, SortOrder } from './types'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import Input from '../../components/ui/Input'
+import PageHeader from '../../components/ui/PageHeader'
+import Select from '../../components/ui/Select'
+import { cn } from '../../lib/cn'
 
 const priceFormatter = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
+
+const LOW_STOCK_LIMIT = 10
 
 const sortOptions = [
   { value: 'title-asc', label: 'Name A–Z' },
@@ -69,14 +77,22 @@ export default function ProductsPage() {
   }
 
   if (isPending) {
-    return <p>Loading products...</p>
+    return (
+      <div>
+        <PageHeader title="Products" />
+        <Card className="p-6 text-sm text-slate-500">Loading products...</Card>
+      </div>
+    )
   }
 
   if (isError) {
     return (
-      <p role="alert" className="text-red-600">
-        Products could not be loaded. Please try again later.
-      </p>
+      <div>
+        <PageHeader title="Products" />
+        <Card role="alert" className="border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          Products could not be loaded. Please try again later.
+        </Card>
+      </div>
     )
   }
 
@@ -84,121 +100,129 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-semibold">Products</h1>
+      <PageHeader title="Products" description={`${data.total} products in your shop`} />
 
-      <div className="mb-4 flex flex-wrap items-end gap-4">
-        <form onSubmit={handleSearch} className="flex items-end gap-2">
-          <div className="flex flex-col">
-            <label htmlFor="search" className="text-sm font-medium">
+      <Card className="mb-4 flex flex-col gap-4 p-4 md:flex-row md:items-end">
+        <form onSubmit={handleSearch} className="flex flex-1 items-end gap-2">
+          <div className="flex flex-1 flex-col gap-1">
+            <label htmlFor="search" className="text-sm font-medium text-slate-700">
               Search
             </label>
-            <input
+            <Input
               id="search"
               type="search"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="rounded border px-2 py-1"
+              placeholder="Search products..."
             />
           </div>
-          <button type="submit" className="rounded border px-3 py-1">
-            Search
-          </button>
+          <Button type="submit">Search</Button>
         </form>
 
-        <div className="flex flex-col">
-          <label htmlFor="category" className="text-sm font-medium">
+        <div className="flex flex-col gap-1 md:w-52">
+          <label htmlFor="category" className="text-sm font-medium text-slate-700">
             Category
           </label>
-          <select
-            id="category"
-            value={query.category}
-            onChange={handleCategoryChange}
-            className="rounded border px-2 py-1"
-          >
+          <Select id="category" value={query.category} onChange={handleCategoryChange}>
             <option value="">All categories</option>
             {categories?.map((category) => (
               <option key={category.slug} value={category.slug}>
                 {category.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
-        <div className="flex flex-col">
-          <label htmlFor="sort" className="text-sm font-medium">
+        <div className="flex flex-col gap-1 md:w-52">
+          <label htmlFor="sort" className="text-sm font-medium text-slate-700">
             Sort by
           </label>
-          <select
-            id="sort"
-            value={`${query.sortBy}-${query.order}`}
-            onChange={handleSortChange}
-            className="rounded border px-2 py-1"
-          >
+          <Select id="sort" value={`${query.sortBy}-${query.order}`} onChange={handleSortChange}>
             {sortOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
-      </div>
+      </Card>
 
-      {data.products.length === 0 ? (
-        <p>No products found.</p>
-      ) : (
-        <table
-          className={`w-full border-collapse bg-white text-left text-sm ${isPlaceholderData ? 'opacity-50' : ''}`}
-        >
-          <thead className="border-b bg-slate-100">
-            <tr>
-              <th className="px-4 py-2">Image</th>
-              <th className="px-4 py-2">Title</th>
-              <th className="px-4 py-2">Category</th>
-              <th className="px-4 py-2 text-right">Price</th>
-              <th className="px-4 py-2 text-right">Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.products.map((product) => (
-              <tr key={product.id} className="border-b">
-                <td className="px-4 py-2">
-                  <img
-                    src={product.thumbnail}
-                    alt={product.title}
-                    className="h-10 w-10 rounded object-cover"
-                  />
-                </td>
-                <td className="px-4 py-2">{product.title}</td>
-                <td className="px-4 py-2 capitalize">{product.category}</td>
-                <td className="px-4 py-2 text-right">{priceFormatter.format(product.price)}</td>
-                <td className="px-4 py-2 text-right">{product.stock}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Card className="overflow-hidden">
+        {data.products.length === 0 ? (
+          <p className="p-6 text-sm text-slate-500">No products found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table
+              className={cn(
+                'w-full min-w-[640px] text-left text-sm transition-opacity',
+                isPlaceholderData && 'opacity-50',
+              )}
+            >
+              <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                <tr>
+                  <th className="px-4 py-3">Image</th>
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3 text-right">Price</th>
+                  <th className="px-4 py-3 text-right">Stock</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {data.products.map((product) => (
+                  <tr key={product.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <img
+                        src={product.thumbnail}
+                        alt={product.title}
+                        className="h-10 w-10 rounded-lg bg-slate-100 object-cover"
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-900">{product.title}</td>
+                    <td className="px-4 py-3 text-slate-600 capitalize">{product.category}</td>
+                    <td className="px-4 py-3 text-right text-slate-900 tabular-nums">
+                      {priceFormatter.format(product.price)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      <span
+                        className={cn(
+                          product.stock < LOW_STOCK_LIMIT
+                            ? 'rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-800'
+                            : 'text-slate-600',
+                        )}
+                      >
+                        {product.stock}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      <nav aria-label="Pagination" className="mt-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => updateParams({ page: String(query.page - 1) })}
-          disabled={query.page <= 1}
-          className="rounded border px-3 py-1 disabled:opacity-40"
+        <nav
+          aria-label="Pagination"
+          className="flex items-center justify-between border-t border-slate-100 px-4 py-3"
         >
-          Previous
-        </button>
-        <span>
-          Page {query.page} of {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() => updateParams({ page: String(query.page + 1) })}
-          disabled={query.page >= totalPages}
-          className="rounded border px-3 py-1 disabled:opacity-40"
-        >
-          Next
-        </button>
-      </nav>
+          <Button
+            variant="secondary"
+            onClick={() => updateParams({ page: String(query.page - 1) })}
+            disabled={query.page <= 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-slate-600">
+            Page {query.page} of {totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            onClick={() => updateParams({ page: String(query.page + 1) })}
+            disabled={query.page >= totalPages}
+          >
+            Next
+          </Button>
+        </nav>
+      </Card>
     </div>
   )
 }
