@@ -3,7 +3,7 @@
 An admin dashboard for a fictional online shop, built to practise modern React and TypeScript.
 Data comes from the public [DummyJSON](https://dummyjson.com) API.
 
-**Live demo:** _coming soon_
+**Live demo:** [shop-panel-one.vercel.app](https://shop-panel-one.vercel.app)
 
 ## Tech Stack
 
